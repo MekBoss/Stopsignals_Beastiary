@@ -1,0 +1,178 @@
+class Arbutor : actor
+{
+
+Default
+{
+    Monster;
+    Height 60;
+    Radius 16;
+    Speed 10;
+    health 500;
+
+    scale 0.5;
+}
+
+override void tick()
+{
+    super.tick();
+
+    if(target && target.health <= 0 && target is "playerpawn" && !transform_player)
+    {
+        setstatelabel("transform_player_corpse");
+    }
+}
+
+private bool arbutor_charge()
+{
+    if(random[arbuctir_charge_chance](0, 20) <= 2)
+        return true;
+    
+    else return false;
+}
+
+private bool lunged, transform_player;
+private uint lunge_timer;
+
+states
+{
+    spawn:
+    idle:
+        arbi a 1 a_look();
+    loop;
+
+    pain:
+    see:
+        arbi a 1 a_chase();
+        tnt1 a 0
+        {
+            if(target && target.health > 0 && arbutor_charge() && (abs(target.pos.x - pos.x) > 1000 || abs(target.pos.y - pos.y) > 1000) )
+                setstatelabel("lunge_start");
+
+            lunge_timer = 0;
+        }
+    loop;
+
+    melee:
+        arbm abc 2;
+    try_hit:
+        arbm d 1
+        {
+            a_facetarget();
+
+			FLineTraceData punch;
+			LineTrace(angle, 50, pitch, 
+			offsetz: 30, offsetforward: radius + 1, data: punch);
+        
+			if(punch.hitactor != null)
+            {
+                console.printf("target type is %s", punch.hitactor.getclassname() );
+                punch.hitactor.damagemobj(self, self, random(30, 50), 'none', 0, 0);
+                
+                if(lunged)
+                {
+                    punch.hitactor.vel += ( (cos(self.angle), sin(self.angle) * 5), 3);
+                }
+            }
+
+            lunged = false;
+        }
+        arbm ecba 5;
+        //arbm  5;
+    goto see;
+
+
+    lunge_start:
+        arbl abcdefghijklmnop 1;
+        arbl qrsrq 2;
+    lunge_in_process:
+        arbm b 1
+        {
+
+            lunge_timer ++;
+
+            if(lunge_timer >= 150)
+            {
+                lunge_timer = 0;
+                setstatelabel("see");
+            }
+            lunged = true;
+            a_facetarget();
+            a_recoil(-3);
+
+            if(target)
+            {
+                vector3 targ_dist = self.pos - target.pos;
+
+                if(double(targ_dist dot targ_dist) <= 2500 + (radius * radius) )
+                    setstatelabel("try_hit");
+            }
+        }
+    loop;
+
+    transform_player_corpse:
+        tnt1 a 0
+        {
+            transform_player = true;
+        }
+    approach_to_corpse:
+        arbi a 1
+        {
+            if(target)
+            {
+                if(target.health <= 0 || target.bcorpse == true)
+                {
+                    a_facetarget();
+                    a_recoil(-2);
+                    
+                    vector3 targ_dist = self.pos - target.pos;
+
+                    if(double(targ_dist dot targ_dist) <= 500 + (radius * radius) )
+                    {
+                        setstate(curstate+1);
+                        vel = (0, 0, 0);
+                    }
+                }
+
+                else
+                {
+                    setstatelabel("see");
+                    transform_player = false;
+                }
+            }
+        }
+    loop;
+        arbt "#" 80;
+        arbt abcdefghijklmnopqrst 3;
+        tnt1 a 0
+        {
+            actor a = spawn("player_mimic_transformation", pos: target.pos);
+            a.translation = target.translation;
+        
+            a.player = target.player;
+            a.health = target.health;
+            a.Angle = target.Angle;
+            a.player.mo = playerpawn(a);
+            a.ObtainInventory (target);
+            a.player.damagecount = 32;
+            
+            target.player = NULL;
+            for (int i = 0; i < MAXPLAYERS; ++i)
+            {
+                if (playeringame[i] && players[i].camera == a)
+                {
+                    players[i].camera = a;
+                }
+            }
+
+            target.destroy();
+            transform_player = false;
+        }
+    goto idle;
+
+    death:
+        tnt1 a 1;
+    stop;
+}
+
+}
+

@@ -1,0 +1,19 @@
+class subroutine_base : thinker {}
+
+class subroutine_destroyer : subroutine_base
+{
+    actor mobj;
+    int wait_time;
+    override void tick()
+    {
+        if(!mobj || wait_time <= 0)
+            destroy();
+
+        wait_time--;
+        if(wait_time <= 0)
+        {
+            mobj.destroy();
+            destroy();
+        }
+    }
+}

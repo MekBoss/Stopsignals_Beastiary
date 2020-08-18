@@ -1,0 +1,4 @@
+gameinfo
+{
+    addeventhandlers = "mod_supports"
+}

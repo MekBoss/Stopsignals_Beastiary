@@ -1,0 +1,22 @@
+version "3.5"
+
+#include "stopsignal/Arbutor.zc"
+#include "stopsignal/body_mimic.zc"
+#include "utility/subroutine.zc"
+
+class mod_supports : eventhandler
+{
+    override void worldthingspawned(WorldEvent e)
+    {
+        string s = "DeadBodyNoWeapon1";
+        if(e.thing is s)
+        {
+            //console.printf("found body");
+            body_mimic(actor.spawn("body_mimic", e.thing.pos)).set_awake_chance(50);
+            e.thing.sprite = spriteid(-1);//reserved id of tnt1 sprite name
+            thinker t = new("subroutine_destroyer");
+            subroutine_destroyer(t).mobj = e.thing;
+            subroutine_destroyer(t).wait_time = 3;
+        }
+    }
+}

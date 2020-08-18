@@ -1,0 +1,5 @@
+green_to_gray = "112:127=96:111"
+green_to_brown = "112:127=64:79"
+green_to_red = "112:127=32:47"
+green_to_blue = "112:127=192:207"
+green_to_orange = "112:127=208:223"

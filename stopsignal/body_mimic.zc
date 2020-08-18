@@ -1,0 +1,211 @@
+class body_mimic : actor
+{
+Default
+{
+    health 300;
+    radius 20;
+    height 15;
+    monster;
+    -shootable
+    -countkill
+    -solid
+    mass 300;
+    speed 5;
+}
+
+protected double awake_chance;
+
+//chance to awake if player nearby, out of 100
+void set_awake_chance(double c)
+{
+    awake_chance = c;
+}
+
+override void postbeginplay()
+{
+    super.postbeginplay();
+    
+    uint d = random(0, 5);
+
+    switch(d)
+    {
+        case 1:
+            a_settranslation("green_to_gray");
+        break;
+
+        case 2:
+            a_settranslation("green_to_brown");
+        break;
+
+        case 3:
+            a_settranslation("green_to_red");
+        break;
+
+        case 4:
+            a_settranslation("green_to_blue");
+        break;
+
+        case 5:
+            a_settranslation("green_to_orange");
+        break;
+
+        case 0:
+        default:
+        break;
+    }
+}
+
+states
+{
+    spawn:
+        tnt1 a 0 nodelay {scale.x = randompick(-1, 1);}
+    spawn_loop:
+        arbr a 200
+        {
+            if(frandom(0, 100) >= awake_chance)
+                for (Actor check = cursector.thinglist; check != null; check = check.snext)
+                    if (check is "playerpawn" && check.player)
+                    {
+                        vector3 offset = check.pos - pos;
+
+                        if(offset dot offset <= 300 * 300)
+                            setstate(curstate+1);//save some time on findstate()
+                    }
+        }
+    loop;
+        tnt1 a 0
+        {
+            bsolid = true;
+            bshootable = true;
+            A_ChangeCountFlags(true, FLAG_NO_CHANGE, FLAG_NO_CHANGE);//(Kill, Item, Secret)
+        }
+    twitching_body:
+        arbr abcde 5;
+        tnt1 a 0
+        {
+            if(random(0, 10) <=2)
+              setstate(curstate+1);
+        }
+    loop;
+        arbr fg 5;
+        arbr hijk 10;
+        arbr lmnopq 5;
+        arbr rstu 15;
+        tnt1 a 0 a_setsize(20, 30);
+        arbr vwxyz 3;
+        tnt1 a 0
+        {
+            a_setsize(20, 50);
+            a_playsound("body_mimic_spawn", CHAN_AUTO, 1);
+        }
+        arbz abcdefh 5;
+        arbz h 1;
+    see:
+        bdmw abcd 3
+        {
+            a_lookex(LOF_NOJUMP, fov:360);
+
+            if(target)
+            {
+                if(target.health > 0)
+                {
+                    vector3 vec_to_targ = pos - target.pos;
+
+                    //self radius 20, player radius nost of the time 20, attack range 20 plus some "safetu" distance
+                    if(vec_to_targ dot vec_to_targ <= 70 * 70)
+                        setstatelabel("melee");
+                
+                    a_facetarget();
+                    a_recoil(-1.4);
+                }
+
+                else
+                {
+                    target = null;
+                    setstatelabel("no_target");
+                }
+            }
+        }
+        tnt1 a 0
+        {
+            if(random(0, 10) <= 1)
+                a_playsound("body_mimic_walk", CHAN_BODY|CHAN_NOSTOP, 1);
+        }
+    loop;
+
+    no_target:
+        arbz h 5
+        {
+            a_wander();
+            a_lookex(fov:360);
+            if(random(-100, 100) >= 95)
+                a_die();
+        }
+    loop;
+
+    melee:
+        bdmp abc 3 a_facetarget();
+        bdmp d 3
+        {
+            a_playsound("body_mimic_attack", CHAN_BODY, 1);
+        
+            FLineTraceData try_claw;
+			LineTrace(angle, 30, pitch, 
+			offsetz: 30, offsetforward: radius, data: try_claw);
+        
+			if(try_claw.hitactor != null)
+            {
+                try_claw.hitactor.damagemobj(self, self, random(15, 20), 'none', 0, 0);
+            }
+        }
+        bdmp ef 3;
+    goto see;
+
+    death:
+        tnt1 a 0 a_playsound("body_mimic_death", CHAN_BODY, 1);
+        bdmd abcdefghi 5;
+        bdmd h -1;
+    stop;
+}
+
+}
+
+
+
+
+class player_mimic_transformation : BloodySkull
+{
+
+states
+{
+    spawn:
+        arbr abcde 5;
+        tnt1 a 0
+        {
+            if(random(0, 10) <=2)
+              setstate(curstate+1);
+        }
+    loop;
+        arbr fg 5;
+        arbr hijk 10;
+        arbr lmnopq 5;
+        arbr rstu 15;
+        tnt1 a 0 a_setsize(20, 30);
+        arbr vwxyz 3;
+        tnt1 a 0
+        {
+            a_playsound("body_mimic_spawn", CHAN_AUTO, 1);
+        }
+        arbz abcdefh 5;
+        arbz h -1;
+    stop;
+
+    see:
+
+    melee:
+
+    death:
+    stop;
+}
+
+}

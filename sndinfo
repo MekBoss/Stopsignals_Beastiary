@@ -1,0 +1,4 @@
+body_mimic_spawn "sounds/body_mimic/body_mimic_spawn.ogg"
+body_mimic_walk "sounds/body_mimic/body_mimic_walk.ogg"
+body_mimic_attack "sounds/body_mimic/body_mimic_attack.ogg"
+body_mimic_death "sounds/body_mimic/body_mimic_death.ogg"
